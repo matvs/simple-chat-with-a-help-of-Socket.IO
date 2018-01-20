@@ -14,18 +14,33 @@ const login = (state = {}, action) =>{
     return state
 }
 
-const users = (state = [], action) =>{
+const users = (state = { users: [], online: []}, action) =>{
     switch(action.type){
         case ActionTypes.GET_USERS_SUCCESS:
-            return action.response
+            return {...state, users: action.response}
+		case ActionTypes.NEW_USER_ONLINE:
+			return {...state, online: state.online.concat(action.user_id)}
+		case ActionTypes.NEW_USER_OFFLINE:
+			//const index = state.online.findIndex((user_id) => user_id == action.user_id)
+			const index = state.online.indexOf(action.user_id)
+			return {...state, online: [...state.online.slice(0,index),...state.online.slice(index+1)]}
     }
     return state
+}
+
+const socket = (state = null, action) => {
+	switch(action.type){
+		case ActionTypes.REGISTER_SOCKET:
+			return action.socket
+	}
+	return state
 }
 
 const mainReducer = combineReducers({
     messages,
     login,
     users,
+	socket,
     routing: routerReducer
 })
 

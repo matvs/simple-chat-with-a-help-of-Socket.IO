@@ -29,5 +29,25 @@ export const users = (token) => ({
     }
 })
 
+export const REGISTER_SOCKET = "REGISTER_SOCKET"
+
+export const registerSocket = (socket) => ({
+		type: REGISTER_SOCKET,
+		socket
+	})
+	
+export const NEW_USER_ONLINE = "NEW_USER_ONLINE"
+export const NEW_USER_OFFLINE = "NEW_USER_OFFLINE"
+
+export const newUserOnline = (user_id) => ({
+	type: NEW_USER_ONLINE,
+	user_id
+})
+
+export const newUserOffline = (user_id) => ({
+	type: NEW_USER_OFFLINE,
+	user_id
+})
+
 
 

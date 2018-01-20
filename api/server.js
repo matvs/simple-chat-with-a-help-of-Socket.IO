@@ -15,21 +15,33 @@ var io = require('socket.io')(http)
 var userIdToSocketId = {
 
 }
+
+function authSocketUser(data,socket,callback){
+	jwt.verify(data.token, "secret_key", function(err, decoded) {
+		if(err) return
+		if(decoded.id == data.user_id){
+			callback(data)
+		} else {
+			socket.disconnect()
+		}
+	})
+}
 io.on('connection', function(socket){
     console.log('user connected')
     //console.log(socket)
     socket.on("user id", function(data){
-        userIdToSocketId[data.id] = socket.id
-        io.emit("new_user_online",{user_id:data.id})
+		authSocketUser(data,socket,function(){
+			userIdToSocketId[data.user_id] = socket.id
+			io.emit("new_user_online",{user_id:data.user_id})
+		 })
     })
     socket.on('send message', function(msg){
-        //console.log(msg)
-        //console.log(socket.id)
-        if(userIdToSocketId.hasOwnProperty(msg.to)) {
+        authSocketUser(msg,socket,function(){
+			if(userIdToSocketId.hasOwnProperty(msg.to) && userIdToSocketId.hasOwnProperty(msg.from)) {
             io.to(userIdToSocketId[msg.to]).emit('receive message', msg)
             io.to(userIdToSocketId[msg.from]).emit('receive message', msg)
         }
-
+		
         message = new Message()
         message.message = msg.text
         message.user_1 = msg.from
@@ -39,7 +51,8 @@ io.on('connection', function(socket){
             if(err)
                 io.to(userIdToSocketId[msg.from]).emit('error sending message')
         })
-
+		 })
+    
     })
 
     socket.on('disconnect', function(){
@@ -47,6 +60,7 @@ io.on('connection', function(socket){
         //console.log(userIdToSocketId)
         for(var key in userIdToSocketId){
             if(userIdToSocketId[key] == socket.id){
+				io.emit("new_user_offline",{user_id:key})
                 delete userIdToSocketId[key]
                 break
             }
@@ -154,7 +168,7 @@ router.route('/login/')
                     var token = jwt.sign({id: user._id}, "secret_key", {
                         expiresIn: 86400
                     })
-                    res.json({token: token, id: user._id})
+                    res.json({token: token, user_id: user._id})
                 } else {
                     res.status(200).json({message: 'Incorret password or username'})
                 }

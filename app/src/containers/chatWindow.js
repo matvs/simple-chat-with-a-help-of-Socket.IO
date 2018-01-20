@@ -10,9 +10,8 @@ class ChatWindow extends Component{
             messages: []
         }
         this.sendMessage = this.sendMessage.bind(this)
-        this.socket = io("localhost:8082",)
-        this.socket.emit("user id", {id: props.user_id})
-        this.socket.on("receive message", function(msg){
+        this.socket = props.socket
+		this.socket.on("receive message", function(msg){
             this.setState(prevState => {
                 return {
                     messages: prevState.messages.concat(msg)
@@ -48,8 +47,9 @@ class ChatWindow extends Component{
 }
 
 const mapStateToProps = state => (
-    {
-        user_id: state.login.id
+    {	
+		user_id: state.login.user_id
+		socket: state.socket
     }
 )
 
