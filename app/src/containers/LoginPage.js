@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import {login} from './../actions'
+import './../bootstrap.min.css'
 
 class LoginPage extends Component{
     constructor(props){
@@ -17,14 +18,23 @@ class LoginPage extends Component{
         this.props.login(this.state)
     }
     render(){
+		const message = this.props.message ? <div className="alert alert-danger">{this.props.message}</div> : <div></div>
         return(
-            <div>
-                <form>
-                    <input type="text" value={this.state.login} onChange={(e) => this.setState({login: e.target.value})} />
-                    <input type="password" value={this.state.password} onChange={(e) => this.setState({password: e.target.value})} />
-                    <button onClick={this.onSubmit}>Login</button>
-                    <p>{this.props.message}</p>
-                </form>
+            <div className="row">
+				<div className="col"></div>
+				<div className="col">
+					<form>
+						<div className="form-group">
+							<input className="form-control" type="text" value={this.state.login} onChange={(e) => this.setState({login: e.target.value})} />
+						</div>
+						<div className="form-group">
+							<input className="form-control" type="password" value={this.state.password} onChange={(e) => this.setState({password: e.target.value})} />
+						<div className="form-group">
+						<button onClick={this.onSubmit}>Login</button>
+					</form>
+					{message}
+				</div>
+				<div className="col"></div>
             </div>
         )
     }

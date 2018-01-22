@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import {connect} from'react-redux'
 import logo from './logo.svg';
 import './App.css';
+import './bootstrap.min.css'
 import oldPage from './components/oldPage'
 import { Router, Route, browserHistory } from 'react-router'
 import { syncHistoryWithStore } from 'react-router-redux'
@@ -44,7 +45,9 @@ class App extends Component {
 		}
     return (
         <Provider store = {store} >
-            {startPage}
+			<div className="container">
+				{startPage}
+			</div>
         </Provider>
     );
   }
