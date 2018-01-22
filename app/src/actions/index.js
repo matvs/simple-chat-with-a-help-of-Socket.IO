@@ -1,4 +1,7 @@
 import {CALL_API} from './../middleware'
+function buildQuery(queries){
+	return '?' + queries.map((query) => query['key'] + '=' + query['value']).join('&')
+}
 
 export const LOGOUT = "LOGOUT"
 
@@ -20,13 +23,37 @@ export const GET_USERS_REQUEST = "GET_USERS_REQUEST"
 export const GET_USERS_SUCCESS = "GET_USERS_SUCCESS"
 export const GET_USERS_FAILURE = "GET_USERS_FAILURE"
 
-export const users = (token) => ({
+export const users = (queries) => ({
     [CALL_API] : {
-        endpoint : "users",
+        endpoint : "users" + buildQuery(queries),
         method: 'GET',
         types: [GET_USERS_REQUEST, GET_USERS_SUCCESS, GET_USERS_FAILURE],
-        headers:{'Authorization': 'Bearer ' + token}
     }
+})
+
+export const SEND_FILE_REQUEST = "SEND_FILE_REQUEST"
+export const SEND_FILE_SUCCESS = "SEND_FILE_SUCCESS"
+export const SEND_FILE_FAILURE = "SEND_FILE_FAILURE"
+
+export const sendFile = (data) => ({
+    [CALL_API] : {
+        endpoint : "upload/",
+        method: 'PUT',
+        payload: data,
+        types: [SEND_FILE_REQUEST, SEND_FILE_SUCCESS, SEND_FILE_FAILURE]
+	}
+})
+
+export const GET_FILES_REQUEST = "GET_FILES_REQUEST"
+export const GET_FILES_SUCCESS = "GET_FILES_SUCCESS"
+export const GET_FILES_FAILURE = "GET_FILES_FAILURE"
+
+export const getFiles = (type) => ({
+    [CALL_API] : {
+        endpoint : "files/" + type,
+        method: 'GET',
+        types: [GET_FILES_REQUEST, GET_FILES_SUCCESS, GET_FILES_FAILURE]
+	}
 })
 
 export const REGISTER_SOCKET = "REGISTER_SOCKET"

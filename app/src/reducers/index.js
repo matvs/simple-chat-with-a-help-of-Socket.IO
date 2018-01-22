@@ -6,7 +6,7 @@ const messages = (state = {}, action) =>{
     return state
 }
 
-const login = (state = {}, action) =>{
+const login = (state = {token:null,user_id:null}, action) =>{
     switch(action.type){
         case ActionTypes.LOGIN_USER_SUCCESS:
             return action.response
@@ -36,11 +36,19 @@ const socket = (state = null, action) => {
 	return state
 }
 
+const files = (state = {sent: [], received: []}, action) =>{
+    switch(action.type){
+        case ActionTypes.GET_FILES_SUCCESS:
+            return {...state,[action.response.type]:action.response.files}
+    }
+    return state
+}
 const mainReducer = combineReducers({
     messages,
     login,
     users,
 	socket,
+	files,
     routing: routerReducer
 })
 

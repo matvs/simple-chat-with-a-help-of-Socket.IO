@@ -3,10 +3,15 @@ var bodyParser = require('body-parser')
 var mongoose = require("mongoose")
 var jwt = require('jsonwebtoken');
 var bcrypt = require('bcryptjs');
+var mkdirp = require('mkdirp')
+var fileUpload = require("express-fileupload")
 
 var app = express()
 app.use(bodyParser.urlencoded({extended: true}))
 app.use(bodyParser.json())
+app.use(fileUpload())
+app.use('/static', express.static(__dirname + '/frontend'))
+
 
 var Message = require('./app/models/message')
 
@@ -70,7 +75,7 @@ io.on('connection', function(socket){
 })
 
 mongoose.connect('mongodb://localhost:27017/nppz')
-
+//mo1289_nppz:gA0G92Yhia7eRBq1xYEq
 var router = express.Router()
 app.use('/api', router)
 router.get('/', function(req,res){
@@ -84,18 +89,18 @@ router.use(function(req, res, next) {
 })
 router.use(function(req, res, next){
     if(req.originalUrl == '/api/login/' || req.method == 'OPTIONS') {
-        next()
+        //next()
     } else {
-        var token = req.headers['authorization'].split(" ")[1]
+        var token = req.headers['authorization']
         if(!token){
             res.status(401).send({message: "No token provided"})
         } else {
-            jwt.verify(token, "secret_key", function(err, decoded) {
+            jwt.verify(token.split(" ")[1], "secret_key", function(err, decoded) {
                 if (err)
                     return res.status(500).send({message: "Ivalid token"});
 
                 req.user_id = decoded.id
-                next()
+                //next()
             });
 
         }
@@ -194,13 +199,12 @@ router.route('/me')
 
 router.route('/users')
     .get(function(req,res){
-        User.find(function(err, users){
+		console.log(req.query)
+		
+        User.find({},'first_name second_name _id',function(err, users){
             if(users.length){
                 res.json(users.filter(function(user){
                     return user._id != req.user_id
-                }).map(function(user){
-                    delete user["password"]
-                    return user
                 }))
             } else {
                 res.json({message: "No users found"})
@@ -208,6 +212,73 @@ router.route('/users')
 
         })
     })
+
+File = require('./app/models/file')	
+router.route('upload/')
+	.put(function(req,res){
+			console.log(req.body)
+			console.log(req.files)
+			if(!req.files)
+				return res.status(400).send({message: "No files were uploaded"})
+				
+			let file = req.files.file
+			let path = __dirname + '/app/files/' + req.body.to
+			mkdirp(path, function(err){
+				if(err) 
+					return res.status(400).send(err)
+				
+				file_db = new File()
+				file_db.name =  Date.now() + "-" + file.name 
+				file_db.from = req.body.from
+				file_db.to = req.body.to
+				file_db.save(function(err){
+					if(err)
+						return res.send(err)
+					file.mv(__dirname + '/app/files/' + req.body.to + '/'+ file_db.name, function(err){
+						if(err)
+							return res.status(500).send(err)
+							
+						res.json({message: "File uploaded"})
+					})
+			})
+			})
+	})
+
+router.route('files/sent')
+	.get(function(req,res){
+		File.find({from: req.user_id}, function(err, files){
+			if(err)
+				res.send(err)
+			res.json({type: 'sent',files})
+		})
+	})
+
+router.route('files/received')
+	.get(function(req,res){
+		File.find({to: req.user_id}, function(err, files){
+			if(err)
+				res.send(err)
+			res.json({type: 'received',files})
+		})	
+	})		
+	
+router.use('downloadfile', function(req,res,next){
+	const data = req.originalUrl.split('/')
+	if(data.length >= 4 && (req.user_id == data[2] || req.user_id == data[3]))
+		next()
+	else
+		res.render(__dirname + '/frontend/index.html')
+})	
+router.use('downloadfile', express.static(__dirname + '/app/files'))	
+
+app.engine('html', require('ejs').renderFile);
+app.set('view engine', 'html');
+app.use(function(req, res,next){
+    if(req.originalUrl.indexOf('api') == -1)
+		res.render(__dirname + '/frontend/index.html')
+	next()	
+  });
+
 
 var port = process.env.PORT || 8082
 http.listen(port, function(){

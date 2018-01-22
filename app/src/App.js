@@ -8,9 +8,10 @@ import { syncHistoryWithStore } from 'react-router-redux'
 import {Provider} from 'react-redux'
 import io from 'socket.io-client'
 import {createReduxStore} from './createStore'
-import UsersList from './containers/UsersList'
+import Users from './containers/Users'
 import LoginPage from './containers/LoginPage'
-import chatWindow from "./containers/chatWindow";
+import ChatWindow from "./containers/chatWindow";
+import Files from "./containers/files"
 import {registerSocket, newUserOnline, newUserOffline} from './actions'
 
 const SOCKET_URL = "localhost:8082"
@@ -20,8 +21,9 @@ class App extends Component {
   render() {
     var startPage = this.props.token ?
         <Router history={history}>
-            <Route path="/" component={UsersList}/>
-            <Route path="messages/:contact_id" component={chatWindow}/>
+            <Route path="/" component={Users}/>
+            <Route path="messages/:contact_id" component={ChatWindow}/>
+			<Route path="files/:type" component={Files}/>
         </Router>
         : <LoginPage />
 		

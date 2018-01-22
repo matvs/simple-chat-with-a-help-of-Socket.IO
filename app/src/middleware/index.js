@@ -3,15 +3,23 @@ const API_ROOT = "http://localhost:8082/api/"
 const callApi = (endpoint, method = 'GET',payload = {}, headers = {}) => {
     const fullUrl = (endpoint.indexOf(API_ROOT) === -1) ? API_ROOT + endpoint : endpoint
 
-    headers['Content-Type'] = 'application/json'
     let properties = {
         method: method,
         headers
     }
 
     if(method != 'GET' && method != 'HEAD'){
-        properties['body'] = JSON.stringify(payload);
-    }
+        if(payload.file){
+			const formData - new FormData()
+			for(key in payload){
+				formData.append(key,payload[key])
+			}
+			properties['body'] = formData
+		} else {
+			properties['body'] = JSON.stringify(payload);
+			properties.headers['Content-Type'] = 'application/json'
+		}
+	}
 
     return fetch(fullUrl,properties)
         .then(response =>
@@ -34,7 +42,13 @@ export const api = store => next => action => {
 
     let { endpoint } = callAPI
     const { payload, method, types, headers } = callAPI
-
+	
+	const token = store.getState().login.token
+	if(token){
+		if(!headers) headers = {}
+		headers['Authorization'] = 'Bearer ' + token
+	}
+	
     const actionWith = data => {
         const finalAction = Object.assign({},action,data)
         delete finalAction[CALL_API]
