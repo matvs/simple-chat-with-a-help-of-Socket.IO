@@ -3,6 +3,7 @@ import { connect } from 'react-redux'
 import {users} from '../actions'
 import {Link} from 'react-router'
 import {UsersList} from '../components/usersList'
+import Navigation from '../components/navigation'
 
 class Users extends Component{
     constructor(props){
@@ -18,21 +19,37 @@ class Users extends Component{
         this.props.getUsers()
     }
 	
-	search(){
+	search(e){
 		this.setState({
 			[e.target.name] : e.target.value
-		})
+		}, () =>
+                this.props.getUsers([{key: 'name', value: this.state.name}, {key: 'keywords', value: this.state.keywords}]))
 		
-		this.props.getUsers([{key: 'name', value: this.state.name}, {key: 'keywords', value: this.state.keywords}])
+
 	}
     render(){
         return(
             <div>
-                <h1>Users</h1>
-				<label>name</label>
-				<input name="name" value={this.state.name} onChange={this.search} />
-				<label>keywords</label>
-				<input name="keywords" value={this.state.keywords} onChange={this.search} />
+                <Navigation active="users" />
+                <div className="row">
+                    <div className="col">
+                        <h1>Users</h1>
+                    </div>
+                </div>
+                <div className="row">
+                    <div className="col">
+                        <div className="form-group">
+                            <label>name</label>
+                            <input className="form-control" name="name" value={this.state.name} onChange={this.search} />
+                        </div>
+                        </div>
+                        <div className="col">
+                            <div className="form-group">
+                                <label>keywords</label>
+                                <input className="form-control" name="keywords" value={this.state.keywords} onChange={this.search} />
+                            </div>
+                        </div>
+                </div>
                 <UsersList users={this.props.users} online={this.props.online} />
             </div>
         )

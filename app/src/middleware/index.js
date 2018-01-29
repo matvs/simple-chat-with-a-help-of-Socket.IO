@@ -1,4 +1,4 @@
-const API_ROOT = "http://localhost:8082/api/"
+export const API_ROOT = "http://localhost:8082/api/"
 
 const callApi = (endpoint, method = 'GET',payload = {}, headers = {}) => {
     const fullUrl = (endpoint.indexOf(API_ROOT) === -1) ? API_ROOT + endpoint : endpoint
@@ -10,11 +10,14 @@ const callApi = (endpoint, method = 'GET',payload = {}, headers = {}) => {
 
     if(method != 'GET' && method != 'HEAD'){
         if(payload.file){
-			const formData - new FormData()
-			for(key in payload){
+			const formData = new FormData()
+			for(let key in payload){
 				formData.append(key,payload[key])
 			}
 			properties['body'] = formData
+            //properties.headers['Content-Type'] = 'application/x-www-form-urlencoded'
+            //properties.headers['Content-Type'] = 'multipart/form-data'
+
 		} else {
 			properties['body'] = JSON.stringify(payload);
 			properties.headers['Content-Type'] = 'application/json'
@@ -41,8 +44,9 @@ export const api = store => next => action => {
     }
 
     let { endpoint } = callAPI
-    const { payload, method, types, headers } = callAPI
-	
+    const { payload, method, types } = callAPI
+	let { headers } = callAPI
+
 	const token = store.getState().login.token
 	if(token){
 		if(!headers) headers = {}

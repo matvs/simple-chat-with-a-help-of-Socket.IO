@@ -2,14 +2,22 @@ import * as ActionTypes from './../actions'
 import {combineReducers} from 'redux'
 import { routerReducer } from 'react-router-redux'
 
-const messages = (state = {}, action) =>{
+const messages = (state = [], action) =>{
+    switch(action.type){
+        case ActionTypes.GET_MESSAGES_SUCCESS:
+            return action.response
+    }
+
     return state
 }
 
 const login = (state = {token:null,user_id:null}, action) =>{
     switch(action.type){
         case ActionTypes.LOGIN_USER_SUCCESS:
+            sessionStorage.setItem('apiData',JSON.stringify(action.response))
             return action.response
+        case ActionTypes.REGISTER_API_DATA:
+            return action.apiData
     }
     return state
 }
@@ -17,7 +25,11 @@ const login = (state = {token:null,user_id:null}, action) =>{
 const users = (state = { users: [], online: []}, action) =>{
     switch(action.type){
         case ActionTypes.GET_USERS_SUCCESS:
-            return {...state, users: action.response}
+            let users = action.response
+            if(action.response.message == 'No users found'){
+                users = []
+            }
+            return {...state, users: users}
 		case ActionTypes.NEW_USER_ONLINE:
 			return {...state, online: state.online.concat(action.user_id)}
 		case ActionTypes.NEW_USER_OFFLINE:
@@ -54,6 +66,7 @@ const mainReducer = combineReducers({
 
 export const rootReducer = (state, action) =>{
     if(action.type === ActionTypes.LOGOUT){
+        sessionStorage.clear()
         return undefined
     }
 

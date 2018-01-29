@@ -29,8 +29,8 @@ class LoginPage extends Component{
 						</div>
 						<div className="form-group">
 							<input className="form-control" type="password" value={this.state.password} onChange={(e) => this.setState({password: e.target.value})} />
-						<div className="form-group">
-						<button onClick={this.onSubmit}>Login</button>
+						</div>
+						<button className="btn btn-primary" onClick={this.onSubmit}>Login</button>
 					</form>
 					{message}
 				</div>

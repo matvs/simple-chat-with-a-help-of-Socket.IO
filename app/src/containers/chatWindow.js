@@ -3,7 +3,8 @@ import { connect } from 'react-redux'
 import io from 'socket.io-client'
 import {UsersList} from '../components/usersList'
 import {Message} from '../components/message'
-import {users, sendFile} from '../actions'
+import {users, sendFile, getMessages} from '../actions'
+import Navigation from '../components/navigation'
 
 class ChatWindow extends Component{
     constructor(props){
@@ -11,7 +12,7 @@ class ChatWindow extends Component{
         this.state={
             message: "",
             content: "",
-            messages: [],
+            messages: this.props.messages || [],
         }
         this.sendMessage = this.sendMessage.bind(this)
 		this.search = this.search.bind(this)
@@ -28,15 +29,34 @@ class ChatWindow extends Component{
 	
 	 componentDidMount() {
         this.props.getUsers()
-    }
-	
-    sendMessage(){
-        this.socket.emit("send message", {
-                text: this.state.message,
-                to: this.props.params.contact_id,
-                from:this.props.user_id})
+         this.props.getMessages(this.props.user_id, this.props.params.contact_id)
 
-        this.setState({message:""})
+    }
+
+    componentWillReceiveProps(newProps){
+        if(this.props.params.contact_id !== newProps.params.contact_id)
+            this.props.getMessages(this.props.user_id, newProps.params.contact_id)
+
+        this.setState(prevState => {
+            return {
+                messages: newProps.messages
+            }
+        })
+    }
+    sendMessage(){
+        const message = {
+            text: this.state.message,
+            to: this.props.params.contact_id,
+            from:this.props.user_id}
+
+        this.socket.emit("send message", message)
+
+        this.setState(prevState => {
+            return {
+                messages: prevState.messages.concat(message),
+                message: ""
+            }
+        })
 		
 		if(this.file.files[0])
 		{
@@ -56,18 +76,35 @@ class ChatWindow extends Component{
     render(){
         return(
             <div>
-				<input name="search" onChange={this.search} />
-				<UsersList users={this.props.users} online={this.props.online} />
-                <p>
-                    {this.state.messages.map((msg) => {
-                            return (<Message key={msg.timestamp} user_id={this.props.user_id} msg={msg}/>)
-                        }
-                        )}
-                </p>
-                <input onChange={(e) => this.setState({message:e.target.value})} value={this.state.message}/>
-				<input name="file" type="file" ref={(input) => this.file = input} />
-                <button onClick={this.sendMessage}>Send</button>
-            </div>
+                <Navigation active="chat"/>
+                <div className="row">
+                    <div className="col-5">
+                        <input className="form-control" name="search" onChange={this.search} />
+                         <UsersList users={this.props.users} online={this.props.online} />
+                    </div>
+                    <div className="col-7">
+                        <p>
+                            {this.state.messages.map((msg) => {
+                                    return (<Message key={msg.timestamp} user_id={this.props.user_id} msg={msg}/>)
+                                }
+                                )}
+                        </p>
+                    </div>
+                </div>
+                <div className="row">
+
+                            <div className="col-5">
+                                <input className="form-control" onChange={(e) => this.setState({message:e.target.value})} value={this.state.message}/>
+                            </div>
+                            <div className="col-3">
+                                <input className="form-control-file" name="file" type="file" ref={(input) => this.file = input} />
+                            </div>
+                             <div className="col">
+                                 <button className="btn btn-primary" onClick={this.sendMessage}>Send</button>
+                             </div>
+                    </div>
+                </div>
+
         )
     }
 }
@@ -77,13 +114,15 @@ const mapStateToProps = state => (
 		user_id: state.login.user_id,
 		socket: state.socket,
 		online: state.users.online,
-        users: state.users.users
+        users: state.users.users,
+        messages: state.messages
     }
 )
 
 const mapDispatchToProps = dispatch => ({
 	getUsers: (queries) => dispatch(users(queries)),
-	sendFile: (data) => dispatch(sendFile(data))
-})
+	sendFile: (data) => dispatch(sendFile(data)),
+    getMessages: (from, to) => dispatch(getMessages(from, to))
+ })
 
 export default connect(mapStateToProps,mapDispatchToProps)(ChatWindow)

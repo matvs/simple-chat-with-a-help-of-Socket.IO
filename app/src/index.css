@@ -1,5 +1,17 @@
-body {
-  margin: 0;
-  padding: 0;
-  font-family: sans-serif;
+body{
+  padding-top: 30px;
+}
+
+/* UserList */
+
+#usersList .online{
+  color:green;
+}
+
+#usersList .offline {
+  color:red;
+}
+
+.myMessage {
+  color:blue;
 }

@@ -4,14 +4,28 @@ var mongoose = require("mongoose")
 var jwt = require('jsonwebtoken');
 var bcrypt = require('bcryptjs');
 var mkdirp = require('mkdirp')
-var fileUpload = require("express-fileupload")
+var multer = require("multer")
+var fs = require("fs")
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        let path = __dirname + '/app/files/' + req.body.to
+        mkdirp(path, function(err){
+            cb(err,path)
+        })
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + "-" + file.originalname)
+    }
+})
+var upload = multer({ storage: storage })
 
 var app = express()
-app.use(bodyParser.urlencoded({extended: true}))
+app.use(bodyParser.urlencoded({extended: false}))
 app.use(bodyParser.json())
-app.use(fileUpload())
-app.use('/static', express.static(__dirname + '/frontend'))
+app.use('/static', express.static(__dirname + '/frontend/static'))
 
+//console.log(bcrypt.hashSync('abc123'))
 
 var Message = require('./app/models/message')
 
@@ -38,19 +52,20 @@ io.on('connection', function(socket){
 		authSocketUser(data,socket,function(){
 			userIdToSocketId[data.user_id] = socket.id
 			io.emit("new_user_online",{user_id:data.user_id})
+            io.to(socket.id).emit("people online", Object.keys(userIdToSocketId))
 		 })
     })
     socket.on('send message', function(msg){
         authSocketUser(msg,socket,function(){
-			if(userIdToSocketId.hasOwnProperty(msg.to) && userIdToSocketId.hasOwnProperty(msg.from)) {
+			if(userIdToSocketId.hasOwnProperty(msg.to)) {
             io.to(userIdToSocketId[msg.to]).emit('receive message', msg)
-            io.to(userIdToSocketId[msg.from]).emit('receive message', msg)
+
         }
 		
         message = new Message()
-        message.message = msg.text
-        message.user_1 = msg.from
-        message.user_2 = msg.to
+        message.text = msg.text
+        message.from = msg.from
+        message.to = msg.to
         message.timestamp = Date.now()
         message.save(function(err){
             if(err)
@@ -74,7 +89,13 @@ io.on('connection', function(socket){
     })
 })
 
-mongoose.connect('mongodb://localhost:27017/nppz')
+mongoose.connect('mongodb://localhost:27017/nppz').then(function(){
+    console.log("DB connected")
+}, function(err){
+    console.log("COULD NOT CONNECT DB")
+    console.log(err.message)
+})
+
 //mo1289_nppz:gA0G92Yhia7eRBq1xYEq
 var router = express.Router()
 app.use('/api', router)
@@ -85,22 +106,23 @@ router.get('/', function(req,res){
 router.use(function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, authorization");
+    //res.header("Access-Control-Request-Method", "GET, POST, DELETE, PUT")
     next()
 })
 router.use(function(req, res, next){
     if(req.originalUrl == '/api/login/' || req.method == 'OPTIONS') {
-        //next()
+        next()
     } else {
         var token = req.headers['authorization']
         if(!token){
-            res.status(401).send({message: "No token provided"})
+            return res.status(401).send({message: "No token provided"})
         } else {
             jwt.verify(token.split(" ")[1], "secret_key", function(err, decoded) {
                 if (err)
                     return res.status(500).send({message: "Ivalid token"});
 
                 req.user_id = decoded.id
-                //next()
+                next()
             });
 
         }
@@ -199,9 +221,8 @@ router.route('/me')
 
 router.route('/users')
     .get(function(req,res){
-		console.log(req.query)
-		
-        User.find({},'first_name second_name _id',function(err, users){
+        const name = req.query.name || ""
+        User.find({login: new RegExp('^' + name,'i')},'login first_name second_name _id',{sort:{login:1}},function(err, users){
             if(users.length){
                 res.json(users.filter(function(user){
                     return user._id != req.user_id
@@ -213,38 +234,33 @@ router.route('/users')
         })
     })
 
+router.route('/messages/:from/:to')
+    .get(function(req,res){
+        Message.find({from: new RegExp(req.params.from + '|' + req.params.to), to: new RegExp(req.params.from + '|' + req.params.to)},'text from to',{sort:{timestamp:1}},function(err, messages){
+           if(err) res.send(err)
+            res.json(messages)
+
+        })
+    })
+
+
 File = require('./app/models/file')	
-router.route('upload/')
-	.put(function(req,res){
-			console.log(req.body)
-			console.log(req.files)
-			if(!req.files)
-				return res.status(400).send({message: "No files were uploaded"})
-				
-			let file = req.files.file
-			let path = __dirname + '/app/files/' + req.body.to
-			mkdirp(path, function(err){
-				if(err) 
-					return res.status(400).send(err)
-				
-				file_db = new File()
-				file_db.name =  Date.now() + "-" + file.name 
-				file_db.from = req.body.from
-				file_db.to = req.body.to
-				file_db.save(function(err){
+router.route('/upload')
+	.post(upload.single("file"), function(req,res,next){
+			const file = req.file
+            file_db = new File()
+        array file_db.name = file.filename
+            file_db.from = req.body.from
+            file_db.to = req.body.to
+            file_db.save(function(err){
 					if(err)
 						return res.send(err)
-					file.mv(__dirname + '/app/files/' + req.body.to + '/'+ file_db.name, function(err){
-						if(err)
-							return res.status(500).send(err)
-							
-						res.json({message: "File uploaded"})
-					})
+                    res.json({message: "File uploaded"})
 			})
 			})
-	})
 
-router.route('files/sent')
+
+router.route('/files/sent')
 	.get(function(req,res){
 		File.find({from: req.user_id}, function(err, files){
 			if(err)
@@ -253,7 +269,7 @@ router.route('files/sent')
 		})
 	})
 
-router.route('files/received')
+router.route('/files/received')
 	.get(function(req,res){
 		File.find({to: req.user_id}, function(err, files){
 			if(err)
@@ -262,20 +278,28 @@ router.route('files/received')
 		})	
 	})		
 	
-router.use('downloadfile', function(req,res,next){
-	const data = req.originalUrl.split('/')
-	if(data.length >= 4 && (req.user_id == data[2] || req.user_id == data[3]))
-		next()
-	else
-		res.render(__dirname + '/frontend/index.html')
+router.route('/downloadfile/:from/:to/:name').get(function(req,res){
+	//const data = req.originalUrl.split('/')
+	if(req.user_id == req.params.to || req.user_id == req.params.from){
+		var file = fs.readFileSync(__dirname + '/app/files/' + req.params.to + '/' + req.params.name)
+        res.end(file,'binary')
+	}
 })	
-router.use('downloadfile', express.static(__dirname + '/app/files'))	
+//router.use('downloadfile', express.static(__dirname + '/app/files'))
 
 app.engine('html', require('ejs').renderFile);
 app.set('view engine', 'html');
 app.use(function(req, res,next){
-    if(req.originalUrl.indexOf('api') == -1)
-		res.render(__dirname + '/frontend/index.html')
+    if(req.originalUrl.indexOf('api') == -1){
+        if(req.originalUrl.indexOf('favicon.ico') !== -1){
+            var img = fs.readFileSync(__dirname + '/frontend/favicon.ico')
+            //res.writeHead(200, {'Content-Type': 'image/gif' });
+            res.end(img, 'binary')
+        }else{
+            res.render(__dirname + '/frontend/index.html')
+        }
+    }
+
 	next()	
   });
 
