@@ -16,25 +16,51 @@ import ChatWindow from "./containers/chatWindow";
 import Files from "./containers/files"
 import {registerSocket, newUserOnline, newUserOffline, registerApiData} from './actions'
 
-const SOCKET_URL = "localhost:8082"
+const SOCKET_URL = "localhost:8083"
 const store = createReduxStore()
 const history = syncHistoryWithStore(browserHistory,store)
 class App extends Component {
     componentWillUpdate(){
-        const apiData = JSON.parse(sessionStorage.getItem('apiData'))
+       /* const apiData = JSON.parse(localStorage.getItem('apiData'))
         let token
         if(apiData){
             token = apiData.token
-            if (token && !this.props.token) {
-                this.props.registerApiData(apiData)
-            }
         }
 
-        if((this.props.token || token) && !this.props.socket){
+        if(token && !this.props.socket){
             const socket = io(SOCKET_URL)
             let oldEmit = socket.emit.bind(socket)
             socket.emit = function(event, data){
-                return oldEmit(event,Object.assign({},{user_id:this.props.user_id, token:this.props.token}, data))
+                return oldEmit(event,Object.assign({},{user_id:apiData.user_id, token:token}, data))
+            }.bind(this)
+            socket.emit("user id")
+            socket.on("new_user_online",function(data){
+                this.props.newUserOnline(data.user_id)
+            }.bind(this))
+            socket.on("new_user_offline",(data) =>
+                this.props.newUserOffline(data.user_id)
+            )
+            socket.on("people online", data => {
+                for(var i=0; i < data.length; i++){
+                    this.props.newUserOnline(data[i])
+                }
+            })
+            this.props.registerSocket(socket)
+        }*/
+    }
+
+    render() {
+        const apiData = JSON.parse(localStorage.getItem('apiData'))
+        let token
+        if(apiData){
+            token = apiData.token
+        }
+
+        if(token && !this.props.socket){
+            const socket = io(SOCKET_URL)
+            let oldEmit = socket.emit.bind(socket)
+            socket.emit = function(event, data){
+                return oldEmit(event,Object.assign({},{user_id:apiData.user_id, token:token}, data))
             }.bind(this)
             socket.emit("user id")
             socket.on("new_user_online",function(data){
@@ -50,10 +76,7 @@ class App extends Component {
             })
             this.props.registerSocket(socket)
         }
-    }
-
-    render() {
-    var startPage = this.props.token ?
+    var startPage = this.props.token || token ?
         <Router history={history}>
             <Route path="/" component={Users}/>
             <Route path="messages/:contact_id" component={ChatWindow}/>
@@ -80,8 +103,7 @@ function connectWithStore(mapStateToProps,mapDispatchToProps, component){
 }
 const mapStateToProps = state => ({
     token: state.login.token,
-	user_id: state.login.user_id,
-	socket: state.socket
+    socket: state.socket
 })
 const mapDispatchToProps = dispatch => ({
 	registerSocket: (socket) => dispatch(registerSocket(socket)),

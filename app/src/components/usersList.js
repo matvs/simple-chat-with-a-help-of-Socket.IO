@@ -6,7 +6,7 @@ export const UsersList = (props) => {
                        <ul id="usersList">
                 {props.users.map((user) => {
                     return (
-                        <li key={user._id}><Link to={"/messages/"+user._id}>{user.login}</Link> { props.online.indexOf(user._id) > -1 ? <span className='online'>online</span> : <span className='offline'>offline</span>}</li>
+                        <li key={user._id}><Link to={"/messages/"+user._id}>{user.first_name} {user.second_name}</Link> { props.online.indexOf(user._id) > -1 ? <span className='online'>online</span> : <span className='offline'>offline</span>}</li>
                     )
                 })}
                         </ul>

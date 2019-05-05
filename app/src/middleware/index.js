@@ -1,5 +1,4 @@
-export const API_ROOT = "http://localhost:8082/api/"
-
+export const API_ROOT = "http://localhost:8083/api/"
 const callApi = (endpoint, method = 'GET',payload = {}, headers = {}) => {
     const fullUrl = (endpoint.indexOf(API_ROOT) === -1) ? API_ROOT + endpoint : endpoint
 
@@ -47,7 +46,11 @@ export const api = store => next => action => {
     const { payload, method, types } = callAPI
 	let { headers } = callAPI
 
-	const token = store.getState().login.token
+    const apiData = JSON.parse(localStorage.getItem('apiData'))
+    let token
+    if(apiData){
+        token = apiData.token
+    }
 	if(token){
 		if(!headers) headers = {}
 		headers['Authorization'] = 'Bearer ' + token

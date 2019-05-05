@@ -222,10 +222,16 @@ router.route('/me')
 router.route('/users')
     .get(function(req,res){
         const name = req.query.name || ""
-        User.find({login: new RegExp('^' + name,'i')},'login first_name second_name _id',{sort:{login:1}},function(err, users){
+        var keywords = req.query.keywords || ""
+        keywords = keywords.split(' ').join('|')
+
+        User.find({$or :[{first_name: new RegExp('^' + name,'i')},{second_name: new RegExp('^' + name,'i')}]},'login first_name second_name keywords _id',{sort:{second_name:1,first_name:1}},function(err, users){
             if(users.length){
+                const keywordsRegExp = new RegExp(keywords,'i')
                 res.json(users.filter(function(user){
                     return user._id != req.user_id
+                }).filter(function(user){
+                    return keywordsRegExp.test(user.keywords)
                 }))
             } else {
                 res.json({message: "No users found"})
@@ -249,7 +255,7 @@ router.route('/upload')
 	.post(upload.single("file"), function(req,res,next){
 			const file = req.file
             file_db = new File()
-        array file_db.name = file.filename
+            file_db.name = file.filename
             file_db.from = req.body.from
             file_db.to = req.body.to
             file_db.save(function(err){
@@ -304,7 +310,7 @@ app.use(function(req, res,next){
   });
 
 
-var port = process.env.PORT || 8082
+var port = process.env.PORT || 8083
 http.listen(port, function(){
     console.log("Listening on port: " + port)
 })

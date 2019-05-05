@@ -16,7 +16,7 @@ class Navigation extends Component{
     render(){
         return (
             <div className="row">
-                <ul class="nav">
+                <ul className="nav">
                     <li class="nav-item">
                         <Link to="/" className={this.getClassName("users")}>Users</Link>
                     </li>

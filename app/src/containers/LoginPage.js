@@ -18,7 +18,7 @@ class LoginPage extends Component{
         this.props.login(this.state)
     }
     render(){
-		const message = this.props.message ? <div className="alert alert-danger">{this.props.message}</div> : <div></div>
+		const message = this.props.message ? <div style={{'marginTop': "30px"}} className="alert alert-danger">{this.props.message}</div> : <div></div>
         return(
             <div className="row">
 				<div className="col"></div>
@@ -42,7 +42,7 @@ class LoginPage extends Component{
 
 const mapStateToProps = state => (
     {
-        message: state.login.message
+        message: state.login.message,
     }
 )
 

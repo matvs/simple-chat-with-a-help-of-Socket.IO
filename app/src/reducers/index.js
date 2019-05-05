@@ -11,13 +11,11 @@ const messages = (state = [], action) =>{
     return state
 }
 
-const login = (state = {token:null,user_id:null}, action) =>{
+const login = (state = {}, action) =>{
     switch(action.type){
         case ActionTypes.LOGIN_USER_SUCCESS:
-            sessionStorage.setItem('apiData',JSON.stringify(action.response))
+            localStorage.setItem('apiData',JSON.stringify(action.response))
             return action.response
-        case ActionTypes.REGISTER_API_DATA:
-            return action.apiData
     }
     return state
 }
@@ -66,7 +64,7 @@ const mainReducer = combineReducers({
 
 export const rootReducer = (state, action) =>{
     if(action.type === ActionTypes.LOGOUT){
-        sessionStorage.clear()
+        localStorage.clear()
         return undefined
     }
 

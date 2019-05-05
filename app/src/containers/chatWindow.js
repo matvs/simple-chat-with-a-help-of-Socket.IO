@@ -25,17 +25,21 @@ class ChatWindow extends Component{
             })
         }.bind(this))
 
+        const apiData = JSON.parse(localStorage.getItem('apiData'))
+        if(apiData){
+            this.user_id = apiData.user_id
+        }
     }
 	
 	 componentDidMount() {
         this.props.getUsers()
-         this.props.getMessages(this.props.user_id, this.props.params.contact_id)
+         this.props.getMessages(this.user_id, this.props.params.contact_id)
 
     }
 
     componentWillReceiveProps(newProps){
         if(this.props.params.contact_id !== newProps.params.contact_id)
-            this.props.getMessages(this.props.user_id, newProps.params.contact_id)
+            this.props.getMessages(this.user_id, newProps.params.contact_id)
 
         this.setState(prevState => {
             return {
@@ -47,7 +51,7 @@ class ChatWindow extends Component{
         const message = {
             text: this.state.message,
             to: this.props.params.contact_id,
-            from:this.props.user_id}
+            from:this.user_id}
 
         this.socket.emit("send message", message)
 
@@ -62,7 +66,7 @@ class ChatWindow extends Component{
 		{
 			this.props.sendFile({
 				to: this.props.params.contact_id,
-                from:this.props.user_id,
+                from:this.user_id,
 				file:this.file.files[0]
 			})
 			this.file.value=""
@@ -77,15 +81,15 @@ class ChatWindow extends Component{
         return(
             <div>
                 <Navigation active="chat"/>
-                <div className="row">
+                <div className="row" style={{marginTop:'25px', height:'500px'}}>
                     <div className="col-5">
-                        <input className="form-control" name="search" onChange={this.search} />
+                        <input style={{marginBottom:'25px'}} className="form-control" name="search" onChange={this.search} />
                          <UsersList users={this.props.users} online={this.props.online} />
                     </div>
-                    <div className="col-7">
+                    <div className="col-7" style={{overflow:'auto'}}>
                         <p>
                             {this.state.messages.map((msg) => {
-                                    return (<Message key={msg.timestamp} user_id={this.props.user_id} msg={msg}/>)
+                                    return (<Message key={msg.timestamp} user_id={this.user_id} msg={msg}/>)
                                 }
                                 )}
                         </p>
@@ -110,8 +114,7 @@ class ChatWindow extends Component{
 }
 
 const mapStateToProps = state => (
-    {	
-		user_id: state.login.user_id,
+    {
 		socket: state.socket,
 		online: state.users.online,
         users: state.users.users,

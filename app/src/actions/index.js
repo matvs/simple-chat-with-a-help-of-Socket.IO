@@ -79,7 +79,7 @@ export const DOWNLOAD_FILE_REQUEST = "DONWLOAD_FILE_REQUEST"
 export const DONWLOAD_FILE_SUCCESS = "DONWLOAD_FILE_SUCCESS"
 export const DONWLOAD_FILE_FAILURE = "DONWLOAD_FILE_FAILURE"
 
-export const downloadFile = (path,token) => {
+export const downloadFile = (path,token,name) => {
         const endpoint = API_ROOT + "downloadfile/" + path
 
         return (dispatch) => {
@@ -89,7 +89,7 @@ export const downloadFile = (path,token) => {
                 headers: {
                     'Authorization': 'Bearer ' + token
                 }
-            }).then(response => response.blob().then(blob => {download(blob,'file.txt',"text/plain"), dispatch({type: DONWLOAD_FILE_SUCCESS})}),
+            }).then(response => response.blob().then(blob => {download(blob,name), dispatch({type: DONWLOAD_FILE_SUCCESS})}),
                 err => dispatch({type:DONWLOAD_FILE_FAILURE, err}))
 
         }
