@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="JavaScriptLibraryMappings">
-    <file url="file://$PROJECT_DIR$/api" libraries="{nppz-Netwerk-Psychiatrie-Psychotherapie-Zurich/api/node_modules}" />
-    <file url="file://$PROJECT_DIR$/app" libraries="{nppz-Netwerk-Psychiatrie-Psychotherapie-Zurich/app/node_modules}" />
-    <includedPredefinedLibrary name="ECMAScript 6" />
-  </component>
-</project>
